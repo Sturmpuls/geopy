@@ -7,6 +7,10 @@ import re
 import sys
 import time
 
+import pandas as pd
+import geopandas
+import folium
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -161,9 +165,14 @@ def to_geojson(data, timestamp=''):
         if data[i]['type'] == 'way':
             data[i]['lat'] = data[i]['center']['lat']
             data[i]['lon'] = data[i]['center']['lon']
+        data[i]['tags']['id'] = data[i]['id']
+        data[i]['tags']['type'] = data[i]['type']
     
     # create geojson
     out = {'type': 'FeatureCollection',
+           "crs": {"type": "name",
+                   "properties": {"name": "EPSG:4326"}
+                  },
            'generator': 'overpass-api',
            'copyright': ('The data included in this document is from '
                          'www.openstreetmap.org. The data is made '
@@ -187,8 +196,9 @@ def to_geojson(data, timestamp=''):
 
 def to_file(geojson, folder='', name=''):
     out = Path()
-    folder = Path().absolute() / 'osmdata' if not folder else Path(folder)
-    name = 'climbing_facilities' + '-' + str(datetime.now().date()) if not name else name
+    folder = Path().absolute() / 'data' / 'climbing_facilities' if not folder else Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    name = 'climbing_facilities' + '_' + str(datetime.now().date()) if not name else name
     out = (folder / name).with_suffix('.geojson')
     with open(out, 'w') as f:
         f.write(json.dumps(geojson))
